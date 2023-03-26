@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "forge-std/console.sol";
-
-
 contract Denial {
 
     address public partner; // withdrawal partner - pay the gas, split the withdraw
@@ -22,7 +19,6 @@ contract Denial {
         // The recipient can revert, the owner will still get their share
         (bool success, ) = partner.call{value:amountToSend}("");
         payable(owner).transfer(amountToSend);
-        console.log(success, partner);
         // keep track of last withdrawal time
         timeLastWithdrawn = block.timestamp;
         withdrawPartnerBalances[partner] +=  amountToSend;

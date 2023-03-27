@@ -12,6 +12,7 @@ import "../src/Denial.sol";
 
 /// @custom:lesson-learned
 // low level "call" is bad and malicious users can drain out all the gas with infinite loops or opcodes
+// (having a large enough amount of gas can mitigate this)
 
 contract Attack {
 
@@ -45,14 +46,9 @@ contract DenialSolvedTest is Test {
 
     s_attack.attack(s_denial);
 
-    console.log(address(s_attack).balance, "partner");
-    console.log(address(s_denial.owner()).balance, "owner");
-
-    // 1-4M gas will run out. 5M+ will not
+    // 1-4M gas will run out. 5M+ will not. This is because call does not forward 100% of the gas, so this attack can be mitigated with enough gas.
     (bool success, ) = address(s_denial).call{gas: 1000000}(abi.encodeWithSignature("withdraw()"));
 
-    console.log(address(s_attack).balance, "partner");
-    console.log(address(s_denial.owner()).balance, "owner");
     assertEq(s_denial.owner().balance, 0);
   }
 }
